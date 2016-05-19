@@ -11,6 +11,8 @@
 
 # NOTE: each of these scripts are designed for a specific target
 # Target: support/lab PC
+# TODO: find a way to integrate/modularize the necessary local account configs to make
+#       this a one script fits all solution.
 
 function Main{
 

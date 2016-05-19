@@ -15,10 +15,10 @@
 function Main{
 
     # Create a list of the names of all local accounts
-    $results = Get-LocalUser
-    $localAccountsList = $results | ForEach-Object {$_.Name}
+    $localAccountsList = updateLocalAccountList
 
     # Create a list of the desired accounts and passwords for this deployment
+    # FIXME: this should really be a hash or object!
     $desiredAccountsList = "student", "tsupport", "maintenance"
     $desiredPasswordList = "maryland", "Arizona1941", "Fixit4me"
 
@@ -30,9 +30,8 @@ function Main{
     # Remove all unwanted user accounts
     removeUnwantedLocalAccounts $ADSIComp $localAccountsList $desiredAccountsList
 
-    # Update the list of local user accounts
-    $results = Get-LocalUser
-    $localAccountsList = $results | ForEach-Object {$_.Name}
+    # Update the list of local user accounts (again)
+    $localAccountsList = updateLocalAccountList
 
     # Add any accounts that are not yet present
     foreach($desiredAccount in $desiredAccountsList){
@@ -45,8 +44,39 @@ function Main{
         }
     }
 
+    # Update the list of local accounts (yet again)
+    $localAccountsList = updateLocalAccountList
 
-} # End Main()
+    # Check to ensure that all of the right user accounts exist and are enabled
+    $localAccountExistsFlag = 0
+    foreach($localAccount in $localAccountsList){
+        if($localAccount -notin $desiredAccountsList){
+            if($localAccount -match "guest" -or "administrator"){
+                continue
+            } else {
+                $localAccountExistsFlag = 1
+            }
+        }
+    }
+    
+    # TODO: place user account enabled check here
+
+    if($localAccountExistsFlag -eq 0){
+        Write-Host "All user accounts successfully created and enabled!"
+    } else {
+        Write-Host "There was a problem creating the desired user accounts!"
+    }
+
+
+} # end Main()
+
+function updateLocalAccountList(){
+    
+    $results = Get-LocalUser
+    $updatedAccountList = $results | ForEach-Object {$_.Name}
+    return $updatedAccountList
+
+} # end updateLocalAccountList()
 
 
 function removeUnwantedLocalAccounts($ADSIHandle, 
@@ -55,10 +85,17 @@ function removeUnwantedLocalAccounts($ADSIHandle,
     # Remove any unwanted local user accounts 
     foreach($localAccount in $localAccountsList){
         if($localAccount -notin $desiredAccountsList){
-            $ADSIComp.Delete('user', "$localAccount")
+            # Skip the built-in accounts and create the others
+            if($localAccount -match "guest"){
+                continue
+            } elseif ($localAccount -match "administrator"){
+                continue
+            } else {
+                $ADSIComp.Delete('user', "$localAccount")
+            }
         }
     }
-} # End removeUnwantedLocalAccounts()
+} # end removeUnwantedLocalAccounts()
 
 
 function createLocalAccount($ADSIHandle, $desiredUsername, $desiredPasswd){
@@ -72,16 +109,16 @@ function createLocalAccount($ADSIHandle, $desiredUsername, $desiredPasswd){
     $secPasswd = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($jPasswd)
     $newUser.SetPassword($secPasswd)
     $newUser.SetInfo()
-}
+} # end createLocalAccount()
 
-function checkLocalAccountsEnabled($ADSIHandle, $localAccountList){
+function checkLocalAccountsEnabled($ADSIHandle, $localAccountList, $desiredAccountList){
     
     #Set the flag for disabled account status
     $Disabled = 0x0002
 
     # Check that the desired user accounts are in enabled status
 
-}
+} # end checkLocalAccountsEnabled()
 
 
 # Source Main

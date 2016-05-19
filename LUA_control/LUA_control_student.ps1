@@ -17,10 +17,9 @@ function Main{
     # Create a list of the names of all local accounts
     $localAccountsList = updateLocalAccountList
 
-    # Create a list of the desired accounts and passwords for this deployment
+    # Create a list of the desired accounts for this deployment
     # FIXME: this should really be a hash or object!
     $desiredAccountsList = "student", "tsupport", "maintenance"
-    $desiredPasswordList = "maryland", "Arizona1941", "Fixit4me"
 
     # Setup the ADSI connection for account management
     # NOTE: pass the handle to any helper fucnctions!

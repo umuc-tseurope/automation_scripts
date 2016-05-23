@@ -34,13 +34,24 @@ function Main{
     # Update the list of local user accounts (again)
     $localAccountsList = updateLocalAccountList
 
-    # Add any accounts that are not yet present
+    # Get the passwords from the password datafile
+    # NOTE: the datafile must be at the root of the users directory or the
+    # below must be changed!
+    $userAccountData = Import-Clixml passwd.xml
+
+    # Convert the ecrypted passwords to secure strings for account creation
+    $studentPassword = $userAccountData.student | ConvertTo-SecureString 
+    $maintenancePassword = $userAccountData.maintenance | ConvertTo-SecureString
+    $tsupportPassword = $userAccountData.tsupport | ConvertTo-SecureString
+
+
+    # Add any accounts that are not yet present 
     foreach($desiredAccount in $desiredAccountsList){
         if($desiredAccount -notin $localAccountsList){
             switch($desiredAccount){
-                {$_ -match "student"}{createLocalAccount $ADSIComp $desiredAccount "maryland"}
-                {$_ -match "tsupport"}{createLocalAccount $ADSIComp $desiredAccount "Arizona1941"}
-                {$_ -match "maintenance"}{createLocalAccount $ADSIComp $desiredAccount "Fixit4me"}
+                {$_ -match "student"}{createLocalAccount $ADSIComp $desiredAccount $studentPassword}
+                {$_ -match "tsupport"}{createLocalAccount $ADSIComp $desiredAccount $tsupportPassword}
+                {$_ -match "maintenance"}{createLocalAccount $ADSIComp $desiredAccount $maintenancePassword}
             }
         }
     }
@@ -118,6 +129,7 @@ function checkLocalAccountsEnabled($ADSIHandle, $localAccountList, $desiredAccou
     $Disabled = 0x0002
 
     # Check that the desired user accounts are in enabled status
+    # TODO: impliment this fucntionality!
 
 } # end checkLocalAccountsEnabled()
 

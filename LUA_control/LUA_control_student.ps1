@@ -40,9 +40,19 @@ function Main{
     $userAccountData = Import-Clixml passwd.xml
 
     # Convert the ecrypted passwords to secure strings for account creation
-    $studentPassword = $userAccountData.student | ConvertTo-SecureString 
-    $maintenancePassword = $userAccountData.maintenance | ConvertTo-SecureString
-    $tsupportPassword = $userAccountData.tsupport | ConvertTo-SecureString
+    $marshal = [System.Runtime.InteropServices.Marshal]
+
+    $studentPasswordTMP = $userAccountData.student | ConvertTo-SecureString
+    $maintenancePasswordTMP = $userAccountData.maintenance | ConvertTo-SecureString
+    $tsupportPasswordTMP = $userAccountData.tsupport | ConvertTo-SecureString
+
+    $studentBtsr = $Marshal::SecureStringToBSTR($studentPasswordTMP)
+    $maintenanceBtsr = $Marshal::SecureStringToBSTR($maintenancePasswordTMP)
+    $tsupportBtsr = $Marshal::SecureStringToBSTR($tsupportPasswordTMP)
+
+    $studentPassword = $Marshal::PtrToStringAuto($studentBtsr)
+    $tsupportPassword = $Marshal::PtrToStringAuto($tsupportBtsr)
+    $maintenancePassword = $Marshal::PtrToStringAuto($maintenanceBtsr)
 
 
     # Add any accounts that are not yet present 

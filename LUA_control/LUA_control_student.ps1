@@ -19,8 +19,8 @@ function Main{
     # Create a list of the names of all local accounts
     $localAccountsList = updateLocalAccountList
 
-    # Create a list of the desired accounts for this deployment
-    # FIXME: this should really be a hash or object!
+    # Create a list of the desired accounts for this deployment depending
+    # on the machine role
     $desiredAccountsList = "student", "tsupport", "maintenance"
 
     # Setup the ADSI connection for account management

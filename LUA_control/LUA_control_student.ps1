@@ -9,19 +9,39 @@
 ####################################################################################
 
 
-# NOTE: each of these scripts are designed for a specific target
-# Target: support/lab PC
 # TODO: find a way to integrate/modularize the necessary local account configs to make
 #       this a one script fits all solution.
 
-function Main{
+function Main([string] $rawMachineRole){
+    
+    # Validate the argument and notify the user if they are incorrect
+    switch($rawMachineRole){
+        {$_ -match "ntctsa"}{ $validMachineRole = $rawMachineRole; break;}
+        {$_ -match "support"}{$validMachineRole = $rawMachineRole; break;}
+        {$_ -match "staff"}{$validMachineRole = $rawMachineRole; break;}
+        {$_ -match "faculty"}{$validMachineRole = $rawMachineRole; break;}
+        {$_ -match "ntc testing"}{$validMachineRole = $rawMachineRole; break;}
+        {$_ -match "server"}{$validMachineRole = $rawMachineRole; break;}
+        {$_ -match "advisor"}{$validMachineRole = $rawMachineRole; break;}
+        default{"The computer role that you provided was not valid! Valid roles include:
+            ntctsa, support, staff, faculty, ntc testing, server, and adviser."}
+    }
+
+    # Grab TSData info for configuration
+    $TSData = Import-Clixml "C:\Windows\system32\TSData.xml"
 
     # Create a list of the names of all local accounts
     $localAccountsList = updateLocalAccountList
 
     # Create a list of the desired accounts for this deployment depending
     # on the machine role
-    $desiredAccountsList = "student", "tsupport", "maintenance"
+    $desiredAccountsList = $TSData."$validMachineRole"
+
+    # Use the list of desired accounts to create a structure with user account data
+    $desiredAccountData = @{}
+    foreach($desiredAccountName in $desiredAccountsList){
+        $desiredAccountData["$desiredAccountName"] = $TSData."$desiredAccountName"
+    }
 
     # Setup the ADSI connection for account management
     # NOTE: pass the handle to any helper fucnctions!
@@ -34,37 +54,8 @@ function Main{
     # Update the list of local user accounts (again)
     $localAccountsList = updateLocalAccountList
 
-    # Get the passwords from the password datafile
-    # NOTE: the datafile must be at the root of the users directory or the
-    # below must be changed!
-    $userAccountData = Import-Clixml passwd.xml
-
-    # Convert the ecrypted passwords to secure strings for account creation
-    $marshal = [System.Runtime.InteropServices.Marshal]
-
-    $studentPasswordTMP = $userAccountData.student | ConvertTo-SecureString
-    $maintenancePasswordTMP = $userAccountData.maintenance | ConvertTo-SecureString
-    $tsupportPasswordTMP = $userAccountData.tsupport | ConvertTo-SecureString
-
-    $studentBtsr = $Marshal::SecureStringToBSTR($studentPasswordTMP)
-    $maintenanceBtsr = $Marshal::SecureStringToBSTR($maintenancePasswordTMP)
-    $tsupportBtsr = $Marshal::SecureStringToBSTR($tsupportPasswordTMP)
-
-    $studentPassword = $Marshal::PtrToStringAuto($studentBtsr)
-    $tsupportPassword = $Marshal::PtrToStringAuto($tsupportBtsr)
-    $maintenancePassword = $Marshal::PtrToStringAuto($maintenanceBtsr)
-
-
-    # Add any accounts that are not yet present 
-    foreach($desiredAccount in $desiredAccountsList){
-        if($desiredAccount -notin $localAccountsList){
-            switch($desiredAccount){
-                {$_ -match "student"}{createLocalAccount $ADSIComp $desiredAccount $studentPassword}
-                {$_ -match "tsupport"}{createLocalAccount $ADSIComp $desiredAccount $tsupportPassword}
-                {$_ -match "maintenance"}{createLocalAccount $ADSIComp $desiredAccount $maintenancePassword}
-            }
-        }
-    }
+    # Create any accounts that don't exist and set their properties
+    setLocalUserAccounts $ADSIComp $localAccountsList $desiredAccountsData
 
     # Update the list of local accounts (yet again)
     $localAccountsList = updateLocalAccountList
@@ -89,8 +80,23 @@ function Main{
         Write-Host "There was a problem creating the desired user accounts!"
     }
 
+    # TODO: put some cleanup code here for the TSData file in %Windows%\System32\
+
 
 } # end Main()
+
+function setLocalUserAccounts($ADSIHandle, $localAccountsList,
+                                    $desiredAccountData){
+    
+    # TODO: add users to appropriate groups on creation
+    foreach($desiredAccount in $desiredAccountData.Keys){
+        if($desiredAccount -notin $localAccountsList){
+            $newUser = $ADSIHandle.Create("User", $desiredAccount)
+            $newUser.SetPassword($desiredAccountData.$desiredAccount.password)
+            $newUser.SetInfo()
+        }
+    }
+} # end setLocalUserAccounts()
 
 function updateLocalAccountList(){
     
@@ -107,7 +113,7 @@ function removeUnwantedLocalAccounts($ADSIHandle,
     # Remove any unwanted local user accounts 
     foreach($localAccount in $localAccountsList){
         if($localAccount -notin $desiredAccountsList){
-            # Skip the built-in accounts and create the others
+            # Skip the built-in accounts and check the others
             if($localAccount -match "guest"){
                 continue
             } elseif ($localAccount -match "administrator"){
@@ -119,19 +125,6 @@ function removeUnwantedLocalAccounts($ADSIHandle,
     }
 } # end removeUnwantedLocalAccounts()
 
-
-function createLocalAccount($ADSIHandle, $desiredUsername, $desiredPasswd){
-    
-    # This is where accounts are created
-    $newUser = $ADSIHandle.Create('User',$desiredUsername)
-
-    # Create and set the password for the new account
-    $rawPasswd = ConvertTo-SecureString $desiredPasswd -asplaintext -force
-    $jPasswd = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($rawPasswd)
-    $secPasswd = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($jPasswd)
-    $newUser.SetPassword($secPasswd)
-    $newUser.SetInfo()
-} # end createLocalAccount()
 
 function checkLocalAccountsEnabled($ADSIHandle, $localAccountList, $desiredAccountList){
     

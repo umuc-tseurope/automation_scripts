@@ -8,26 +8,32 @@
 ##
 ####################################################################################
 
+# This makes the argument passed availible to the rest of the script
+param(
+        $role
+    )
 
-# TODO: find a way to integrate/modularize the necessary local account configs to make
-#       this a one script fits all solution.
-
-function Main([string] $rawMachineRole){
+function Main{
     
     # Validate the argument and notify the user if they are incorrect
-    switch($rawMachineRole){
-        {$_ -match "ntctsa"}{ $validMachineRole = $rawMachineRole; break;}
-        {$_ -match "support"}{$validMachineRole = $rawMachineRole; break;}
-        {$_ -match "staff"}{$validMachineRole = $rawMachineRole; break;}
-        {$_ -match "faculty"}{$validMachineRole = $rawMachineRole; break;}
-        {$_ -match "ntc testing"}{$validMachineRole = $rawMachineRole; break;}
-        {$_ -match "server"}{$validMachineRole = $rawMachineRole; break;}
-        {$_ -match "advisor"}{$validMachineRole = $rawMachineRole; break;}
-        default{"The computer role that you provided was not valid! Valid roles include:
-            ntctsa, support, staff, faculty, ntc testing, server, and adviser."}
+    Write-Host $role
+    switch($role){
+        {$_ -match "ntctsa"}{$validMachineRole = $role; break;}
+        {$_ -match "support"}{$validMachineRole = "$role"; break;}
+        {$_ -match "staff"}{$validMachineRole = $role; break;}
+        {$_ -match "faculty"}{$validMachineRole = $role; break;}
+        {$_ -match "ntctesting"}{$validMachineRole = $role; break;}
+        {$_ -match "server"}{$validMachineRole = $role; break;}
+        {$_ -match "advisor"}{$validMachineRole = $role; break;}
+        default{
+            Write-Host "The computer role that you provided is not valid! Valid roles include:
+            ntctsa, support, staff, faculty, ntctesting, server, and adviser."
+            return
+            }
     }
 
-    # Grab TSData info for configuration
+    # Grab TSData info for configuration TODO: wrap this in some error handling
+    # just in case the file has not yet been created!
     $TSData = Import-Clixml "C:\Windows\system32\TSData.xml"
 
     # Create a list of the names of all local accounts
@@ -35,14 +41,15 @@ function Main([string] $rawMachineRole){
 
     # Create a list of the desired accounts for this deployment depending
     # on the machine role
-    $desiredAccountsList = $TSData."$validMachineRole"
+    $desiredAccountsList = $TSData.$validMachineRole.desiredUserAccounts
 
     # Use the list of desired accounts to create a structure with user account data
     $desiredAccountData = @{}
     foreach($desiredAccountName in $desiredAccountsList){
-        $desiredAccountData["$desiredAccountName"] = $TSData."$desiredAccountName"
+        $desiredAccountData[$desiredAccountName] = $TSData.$desiredAccountName
     }
 
+    $desiredAccountData
     # Setup the ADSI connection for account management
     # NOTE: pass the handle to any helper fucnctions!
     $computername = $env:COMPUTERNAME
@@ -91,6 +98,7 @@ function setLocalUserAccounts($ADSIHandle, $localAccountsList,
     # TODO: add users to appropriate groups on creation
     foreach($desiredAccount in $desiredAccountData.Keys){
         if($desiredAccount -notin $localAccountsList){
+            $desiredAccountData.$desiredAccount.password
             $newUser = $ADSIHandle.Create("User", $desiredAccount)
             $newUser.SetPassword($desiredAccountData.$desiredAccount.password)
             $newUser.SetInfo()

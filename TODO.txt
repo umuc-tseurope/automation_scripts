@@ -1,1 +1,11 @@
+# TS Europe automation project TODO list
 
+NOTE: Please remove items once they have been tested and merged into the master branch.
+
+* Create a help message for each tool
+
+* Additional functionality as listed in the README
+
+* Complete MVP for the local user account creation script
+
+* Integrate an automated testing framework into the development work flow

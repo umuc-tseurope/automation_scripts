@@ -9,6 +9,9 @@ These scripts will only run on systems with Windows Powershell (version 2.0 or h
 ## List of scripts
 The following is a list of the scripts that have been tested and are ready to be used. Clone the repository on to a thumb drive or in the directory of your choice and run the scripts as an administrator or from a shell started as administrator. Special instructions and examples are listed with each item.
 
+* WUFirewall_rules.ps1 - Create firewall rules for Remote Desktop and Windows Update
+  USAGE: Takes no arguments. Just applies the change to the firewall settings.
+
 * WindowsActivate.ps1 - Activate windows 7
   USAGE: Takes no arguments. Just activates the OS with the enterprise license supplied by the tsdata.xml file. Run as admin with either the absolute path or navigate to the directory and perpend '.\' to the filename.
 

@@ -34,3 +34,7 @@ cd $startPath;
 .\Registry_control\reg_win_update_fix.ps1;
 
 cd $startPath;
+
+.\os_configuration\WUFirewall_rules.ps1;
+
+cd $startPath;

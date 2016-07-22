@@ -10,7 +10,7 @@ NOTE: Please place an 'x' in the block next to items once they have been tested 
 List of functionality to be implemented (add to this list as necessary):
 
 - [ ] Network configuration
-- [ ] Firewall settings and rules
+- [X] Firewall settings and rules
 - [ ] Backup solution for server
 - [X] Windows activation
 - [ ] Application installation/update
@@ -21,4 +21,4 @@ List of functionality to be implemented (add to this list as necessary):
 - [ ] Active Directory domain stats and information (for in-house and later possibly remote site)
 - [ ] Printer setup
 - [ ] Date/time settings
-- [ ] Remote desktop settings
+- [X] Remote desktop settings

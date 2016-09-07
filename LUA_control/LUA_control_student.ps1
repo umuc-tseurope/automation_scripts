@@ -28,6 +28,8 @@ function Main([string] $rawMachineRole){
     }
 
     # Grab TSData info for configuration
+    # TODO: there needs to be some error handling here for if the file does
+    # not yet exist!
     $TSData = Import-Clixml "C:\Windows\system32\TSData.xml"
 
     # Create a list of the names of all local accounts

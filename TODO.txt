@@ -1,1 +1,24 @@
+TS Europe automation project TODO list
 
+NOTE: Please place an 'x' in the block next to items once they have been tested and merged into the master branch.
+
+- [ ] Create a help message for each tool
+- [ ] Complete/test MVP for the local user account creation script
+- [X] Complete/test MVP for the Windows activation script
+- [ ] Integrate an automated testing framework into the development work flow
+
+List of functionality to be implemented (add to this list as necessary):
+
+- [ ] Network configuration
+- [X] Firewall settings and rules
+- [ ] Backup solution for server
+- [X] Windows activation
+- [ ] Application installation/update
+- [ ] Windows updates
+- [ ] Java installs/updates and security settings
+- [ ] User settings (wallpaper, start menu)
+- [ ] System settings (splash screen, power settings, updates, notifications)
+- [ ] Active Directory domain stats and information (for in-house and later possibly remote site)
+- [ ] Printer setup
+- [ ] Date/time settings
+- [X] Remote desktop settings

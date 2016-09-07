@@ -6,16 +6,15 @@
 ##
 ###########################################################
 
-function main(){
 # Set up the computer object
 $computer = gc env:computername
 
-# Get the license key from the datafile
-# TODO: impliment this!
+# Read in the file with the config data
+$configData = Import-Clixml "C:\Windows\System32\tsdata.xml"
 
-$key = # insert variable with product key here!
+$key = $configData.productKeys.Windows7
 
-$service = get-wmiObject -query “select * from SoftwareLicensingService” -computername $computer
+$service = Get-WMIObject -query “select * from SoftwareLicensingService” -computername $computer
 
 $service.InstallProductKey($key)
 

@@ -10,7 +10,7 @@
 # Get the product key from the datafile
 $tsData = Import-Clixml "C:\Windows\System32\tsdata.xml"
 
-$productKey = $tsData.MSOffice2010
+$productKey = $tsData.productKeys.MSOffice2010
 
 # Move to the office directory
 cd "C:\Program Files (x86)\Microsoft Office\Office14"

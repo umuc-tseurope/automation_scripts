@@ -9,9 +9,7 @@
 ####################################################################################
 
 # This makes the argument passed availible to the rest of the script
-param(
-        $role
-    )
+param($role)
 
 function Main{
     
@@ -27,8 +25,8 @@ function Main{
         {$_ -match "advisor"}{$validMachineRole = $role; break;}
         default{
             Write-Host "The computer role that you provided is not valid! Valid roles include:
-            ntctsa, support, staff, faculty, ntctesting, server, and adviser."
-            return
+            ntctsa, support, staff, faculty, ntctesting, server, and advisor."
+            Return
             }
     }
 
@@ -37,19 +35,20 @@ function Main{
     $TSData = Import-Clixml "C:\Windows\system32\TSData.xml"
 
     # Create a list of the names of all local accounts
-    $localAccountsList = updateLocalAccountList
+    $localAccountsList = updateLocalAccountList $ADSIComp
+    Write-Host $localAccountsList
 
     # Create a list of the desired accounts for this deployment depending
     # on the machine role
-    $desiredAccountsList = $TSData.$validMachineRole.desiredUserAccounts
+    $desiredAccountsList = $TSData.computerRoles.$validMachineRole.GetEnumerator()|foreach{$_.Value}
 
     # Use the list of desired accounts to create a structure with user account data
+    # FIXME: there is a problem with this part!
     $desiredAccountData = @{}
     foreach($desiredAccountName in $desiredAccountsList){
-        $desiredAccountData[$desiredAccountName] = $TSData.$desiredAccountName
+        $desiredAccountData[$desiredAccountName] = $TSData.userAccounts.$desiredAccountName
     }
 
-    $desiredAccountData
     # Setup the ADSI connection for account management
     # NOTE: pass the handle to any helper fucnctions!
     $computername = $env:COMPUTERNAME
@@ -59,18 +58,18 @@ function Main{
     removeUnwantedLocalAccounts $ADSIComp $localAccountsList $desiredAccountsList
 
     # Update the list of local user accounts (again)
-    $localAccountsList = updateLocalAccountList
+    $localAccountsList = updateLocalAccountList $ADSIComp
 
     # Create any accounts that don't exist and set their properties
     setLocalUserAccounts $ADSIComp $localAccountsList $desiredAccountsData
 
     # Update the list of local accounts (yet again)
-    $localAccountsList = updateLocalAccountList
+    $localAccountsList = updateLocalAccountList $ADSIComp
 
     # Check to ensure that all of the right user accounts exist and are enabled
     $localAccountExistsFlag = 0
     foreach($localAccount in $localAccountsList){
-        if($localAccount -notin $desiredAccountsList){
+        if($desiredAccountsList -notcontains $localAccount){
             if($localAccount -match "guest" -or "administrator"){
                 continue
             } else {
@@ -86,8 +85,6 @@ function Main{
     } else {
         Write-Host "There was a problem creating the desired user accounts!"
     }
-
-    # TODO: put some cleanup code here for the TSData file in %Windows%\System32\
 
 
 } # end Main()
@@ -106,9 +103,9 @@ function setLocalUserAccounts($ADSIHandle, $localAccountsList,
     }
 } # end setLocalUserAccounts()
 
-function updateLocalAccountList(){
+function updateLocalAccountList($ADSIHandle){
     
-    $results = Get-LocalUser
+    $results = $ADSIHandle.Children | where{$_.SchemaClassName = 'User'}
     $updatedAccountList = $results | ForEach-Object {$_.Name}
     return $updatedAccountList
 

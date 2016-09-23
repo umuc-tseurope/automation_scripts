@@ -8,6 +8,8 @@
 ##
 ####################################################################################
 
+
+
 # This makes the argument passed availible to the rest of the script
 param($role)
 
@@ -35,41 +37,43 @@ function Main{
     $TSData = Import-Clixml "C:\Windows\system32\TSData.xml"
 
     # Create a list of the names of all local accounts
-    $localAccountsList = updateLocalAccountList $ADSIComp
+    $localAccountsList = updateLocalAccountList
     Write-Host $localAccountsList
 
     # Create a list of the desired accounts for this deployment depending
     # on the machine role
-    $desiredAccountsList = $TSData.computerRoles.$validMachineRole.GetEnumerator()|foreach{$_.Value}
+    $desiredAccountsList = 
+        $TSData.computerRoles.$validMachineRole.desiredUserAccounts.GetEnumerator()|foreach{$_.Value}
 
     # Use the list of desired accounts to create a structure with user account data
-    # FIXME: there is a problem with this part!
+    # FIXME: Pack the account data in a consistent data
     $desiredAccountData = @{}
     foreach($desiredAccountName in $desiredAccountsList){
-        $desiredAccountData[$desiredAccountName] = $TSData.userAccounts.$desiredAccountName
+        $desiredAccountData.add("$desiredAccountName", 
+        $TSData.computerRoles.$desiredAccountName.desiredUserAccounts)
     }
 
     # Setup the ADSI connection for account management
     # NOTE: pass the handle to any helper fucnctions!
-    $computername = $env:COMPUTERNAME
-    $ADSIComp = [adsi]"WinNT://$Computername"
+    #$computername = $env:COMPUTERNAME
+    #$ADSIComp = [adsi]"WinNT://$Computername"
 
     # Remove all unwanted user accounts
-    removeUnwantedLocalAccounts $ADSIComp $localAccountsList $desiredAccountsList
+    removeUnwantedLocalAccounts $localAccountsList $desiredAccountsList
 
     # Update the list of local user accounts (again)
-    $localAccountsList = updateLocalAccountList $ADSIComp
+    $localAccountsList = updateLocalAccountList
 
     # Create any accounts that don't exist and set their properties
-    setLocalUserAccounts $ADSIComp $localAccountsList $desiredAccountsData
+    setLocalUserAccounts $localAccountsList $desiredAccountsData
 
     # Update the list of local accounts (yet again)
-    $localAccountsList = updateLocalAccountList $ADSIComp
+    $localAccountsList = updateLocalAccountList
 
     # Check to ensure that all of the right user accounts exist and are enabled
     $localAccountExistsFlag = 0
     foreach($localAccount in $localAccountsList){
-        if($desiredAccountsList -notcontains $localAccount){
+        if($localAccount -notin $desiredAccountsList){
             if($localAccount -match "guest" -or "administrator"){
                 continue
             } else {
@@ -89,31 +93,26 @@ function Main{
 
 } # end Main()
 
-function setLocalUserAccounts($ADSIHandle, $localAccountsList,
-                                    $desiredAccountData){
+function setLocalUserAccounts($localAccountsList, $desiredAccountData){
     
     # TODO: add users to appropriate groups on creation
     foreach($desiredAccount in $desiredAccountData.Keys){
         if($desiredAccount -notin $localAccountsList){
             $desiredAccountData.$desiredAccount.password
-            $newUser = $ADSIHandle.Create("User", $desiredAccount)
-            $newUser.SetPassword($desiredAccountData.$desiredAccount.password)
-            $newUser.SetInfo()
+           
         }
     }
 } # end setLocalUserAccounts()
 
-function updateLocalAccountList($ADSIHandle){
+function updateLocalAccountList(){
     
-    $results = $ADSIHandle.Children | where{$_.SchemaClassName = 'User'}
-    $updatedAccountList = $results | ForEach-Object {$_.Name}
+    $updatedAccountList = net user
     return $updatedAccountList
 
 } # end updateLocalAccountList()
 
 
-function removeUnwantedLocalAccounts($ADSIHandle, 
-                                     $localAccountsList, $desiredAccountsList){
+function removeUnwantedLocalAccounts($localAccountsList, $desiredAccountsList){
 
     # Remove any unwanted local user accounts 
     foreach($localAccount in $localAccountsList){
@@ -124,7 +123,10 @@ function removeUnwantedLocalAccounts($ADSIHandle,
             } elseif ($localAccount -match "administrator"){
                 continue
             } else {
-                $ADSIComp.Delete('user', "$localAccount")
+                # I have not been able to get the ADSI handle to
+                # work right, so using "net user" instead.
+                #$ADSIComp.Delete('user', "$localAccount")
+                net user $localAccount /delete 
             }
         }
     }

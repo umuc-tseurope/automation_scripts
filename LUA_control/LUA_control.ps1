@@ -106,7 +106,7 @@ function setLocalUserAccounts($localAccountsList, $desiredAccountData){
 
 function updateLocalAccountList(){
     
-    $updatedAccountList = net user
+    $updatedAccountList = & 'net user'
     return $updatedAccountList
 
 } # end updateLocalAccountList()
@@ -126,7 +126,7 @@ function removeUnwantedLocalAccounts($localAccountsList, $desiredAccountsList){
                 # I have not been able to get the ADSI handle to
                 # work right, so using "net user" instead.
                 #$ADSIComp.Delete('user', "$localAccount")
-                net user $localAccount /delete 
+                & 'net user $localAccount /delete'
             }
         }
     }

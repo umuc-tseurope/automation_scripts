@@ -6,6 +6,7 @@ NOTE: Please place an 'x' in the block next to items once they have been tested 
 - [ ] Complete/test MVP for the local user account creation script
 - [X] Complete/test MVP for the Windows activation script
 - [ ] Integrate an automated testing framework into the development work flow
+- [X] Develop and impliment a naming convention for script files
 
 List of functionality to be implemented (add to this list as necessary):
 
@@ -14,7 +15,7 @@ List of functionality to be implemented (add to this list as necessary):
 - [ ] Backup solution for server
 - [X] Windows activation
 - [ ] Application installation/update
-- [ ] Windows updates
+- [X] Windows updates (enable in registry)
 - [ ] Java installs/updates and security settings
 - [ ] User settings (wallpaper, start menu)
 - [ ] System settings (splash screen, power settings, updates, notifications)

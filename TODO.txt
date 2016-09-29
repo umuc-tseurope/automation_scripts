@@ -7,6 +7,8 @@ NOTE: Please place an 'x' in the block next to items once they have been tested 
 - [X] Complete/test MVP for the Windows activation script
 - [ ] Integrate an automated testing framework into the development work flow
 - [X] Develop and impliment a naming convention for script files
+- [ ] Impliment remoting on the server and clone the repo there so that the 
+      scripts can be run without a USB drive or copying files
 
 List of functionality to be implemented (add to this list as necessary):
 
